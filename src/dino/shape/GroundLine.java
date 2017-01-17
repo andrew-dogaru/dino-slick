@@ -16,6 +16,8 @@ public class GroundLine extends BoundingBox {
     
     private static final int NUM_HOLES = 15;
     private static final float MIN_GAP_BETWEEN_HOLES = 100.0f;
+    /** Width of a hole in pixels */
+    private static final float HOLE_WIDTH = 70.0f;
     
     public GroundLine(float x, float y, float width, float height, float canvasWidth) {
         super(x, y, width, height);
@@ -103,7 +105,6 @@ public class GroundLine extends BoundingBox {
     
     static class Hole {
         private float x;
-        private static final float WIDTH = 70.0f;
         
         Hole(float position) {
             this.x = position;
@@ -114,7 +115,7 @@ public class GroundLine extends BoundingBox {
         }
         
         float right() {
-            return x + WIDTH;
+            return x + HOLE_WIDTH;
         }
     }
     
@@ -148,7 +149,7 @@ public class GroundLine extends BoundingBox {
          * 3. Generate a Hole at a random position within the 'randomRange' part
          * 4. Add the previous segment
          */
-        final float fixedPartLen = (totalLen + Hole.WIDTH) / numSegments;
+        final float fixedPartLen = (totalLen + HOLE_WIDTH) / numSegments;
         final float randomRange = fixedPartLen - gapLen;
         float begin = 0; // beginning of segment (x coordinate)
         float end = 0;   // end of segment
@@ -161,8 +162,8 @@ public class GroundLine extends BoundingBox {
             segments.add(new BoundingBox(begin, getY(), end - begin, getHeight()));
 
             // next segment starts after the hole
-            begin = end + Hole.WIDTH;
-            lenFromPreviousHole = fixedPartLen - Hole.WIDTH - lenToHole;
+            begin = end + HOLE_WIDTH;
+            lenFromPreviousHole = fixedPartLen - HOLE_WIDTH - lenToHole;
         }
         
         // last segment

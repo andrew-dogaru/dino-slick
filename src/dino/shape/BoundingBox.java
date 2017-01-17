@@ -41,9 +41,9 @@ public class BoundingBox extends MovablePoint {
      * @param point2 the second point
      */
     public BoundingBox(Point point1, Point point2) {
-        super(point1.getX(), point1.getY());
-        this.width = point2.getX() - point1.getX();
-        this.height = point2.getY() - point1.getY();
+        super(Math.min(point1.getX(), point2.getX()), Math.min(point1.getY(), point2.getY()));
+        this.width = Math.abs(point2.getX() - point1.getX());
+        this.height = Math.abs(point2.getY() - point1.getY());
     }
 
     /**
@@ -62,6 +62,22 @@ public class BoundingBox extends MovablePoint {
      */
     public float getHeight() {
         return height;
+    }
+
+    /**
+     * Set the width of the box
+     * @param value the new width
+     */
+    public void setWidth(float value) {
+        this.width = value;
+    }
+    
+    /**
+     * Set the height of the box
+     * @param value the new height
+     */
+    public void setHeight(float value) {
+        this.height = value;
     }
 
     /**
@@ -84,6 +100,19 @@ public class BoundingBox extends MovablePoint {
         return true;
     }
 
+    /**
+     * Check if this box is above (lower Y) the other box.
+     * @param other the other box
+     * @return true if this box is above the other 
+     */
+    public boolean isAbove(BoundingBox other) {
+        return (getY() + getHeight() < other.getY());
+    }
+
+    /**
+     * Set this box above the the other box and stop it from moving on Y.
+     * @param other the other box
+     */
     public void stopAbove(BoundingBox other) {
         setY(other.getY() - getHeight());
         setYSpeed(0.0f);        

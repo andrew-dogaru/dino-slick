@@ -21,8 +21,8 @@ import dino.shape.MovablePoint;
 public class Play extends BasicGameState {
     
     private int elapsedTime; // since init() (milliseconds)
-    private static final float speed = 0.3f;  // pixels/millisecond
-    private static final float initialHSpeed = - 1.5f; // pixels/millisecond
+    private static final float initialXSpeed = 0.3f;   // pixels/millisecond
+    private static final float initialYSpeed = - 1.5f; // pixels/millisecond
     
     // Dino stays at this x position and jumps up and down
     private static final float DINO_X_POSITION = 150.0f;  
@@ -30,15 +30,20 @@ public class Play extends BasicGameState {
     private GroundLine ground;
     private Dino dino;
     private BoundingBox canvas;
-    
+
+    private float speed;    // ground speed
+
     private int lives;      // Dino's lives
+    private int points;     // game points
     private int transitionTimer;
-    private double points;  // game points
  
     // If canKickDino is false then the user can't change Dino's speed.
     // This happens if the user kicked Dino up while he was already jumping
     // (can do it only once) or if Dino falls through a hole.
-    private boolean canKickDino; 
+    private boolean canKickDino;
+    
+    // True if dino is falling through a hole, otherwise false
+    private boolean dinoInHole;
 
     public Play() {
     }
@@ -49,9 +54,11 @@ public class Play extends BasicGameState {
         float groundBase = gc.getHeight() * 4 / 5.0f;
         ground = new GroundLine(0.0f, groundBase, (float)gc.getWidth() * 10, 10.0f, canvas.getWidth());
         dino = newDinoInstance();
+        speed = initialXSpeed;
         lives = 3;
         transitionTimer = 0;
         canKickDino = true;
+        dinoInHole = false;
     }
 
     public void render(GameContainer gc, StateBasedGame sbg, Graphics g) {
@@ -64,9 +71,10 @@ public class Play extends BasicGameState {
         
         // Game info
         Printer p = new Printer(g, Color.white, 20, 0);
-        p.println("Dino: " + dino.getX() + " " + dino.getY());
-        p.println("Dino Speed: " + dino.getXSpeed() + " " + dino.getYSpeed());
-        p.println("Line: " + ground.getX());
+// Use for debugging
+//        p.println("Dino: " + dino.getX() + " " + dino.getY());
+//        p.println("Dino Speed: " + dino.getXSpeed() + " " + dino.getYSpeed());
+//        p.println("Line: " + ground.getX());
         p.println("Lives: " + lives);
         p.println("Points: " + points);
     }
@@ -74,6 +82,9 @@ public class Play extends BasicGameState {
     public void update(GameContainer gc, StateBasedGame sbg, int delta) throws SlickException {
 
         elapsedTime += delta;
+        
+        // ground speed doubles after 20 secs
+        speed = initialXSpeed * (1 + ((float)elapsedTime)/20000);
 
         if (lives == 0) {
             // Game over
@@ -84,9 +95,6 @@ public class Play extends BasicGameState {
             points = elapsedTime;
         }
 
-        // Ground line moves left
-        ground.left(speed * delta);
-
         // Move the dino
         Input input = gc.getInput();
         Control.checkForExit(input);
@@ -94,17 +102,19 @@ public class Play extends BasicGameState {
         if (input.isKeyPressed(Input.KEY_UP) && canKickDino) {
             if (dino.isMovingOnY())
                 canKickDino = false; // can't kick a moving Dino more than once
-            dino.kickOnY(initialHSpeed, elapsedTime);
+            dino.kickOnY(initialYSpeed, elapsedTime);
         }
         
         // If Dino is moving, then update its position and 
-        // check if it hits the ground, or it falls through a hole
+        // check if it hits the ground, or if it falls through a hole
         if (dino.isMovingOnY()) {
             MovablePoint nextPosition = Gravity.update(dino, elapsedTime);
             BoundingBox trajectory = new BoundingBox(dino, nextPosition);
-            if (ground.intersects(trajectory)) {
+
+            if (!dinoInHole && ground.intersects(trajectory)) {
                 dino.stopAbove(ground);
                 canKickDino = true;
+                dinoInHole = false;
             }
             else {
                 // Dino continues falling
@@ -117,6 +127,7 @@ public class Play extends BasicGameState {
                     // Dino gets a new life 
                     dino = newDinoInstance();
                     canKickDino = true;
+                    dinoInHole = false;
                 }
             }
         }
@@ -131,10 +142,14 @@ public class Play extends BasicGameState {
             if (!ground.intersects(lookDown)) {
                 
                 // Dino starts falling and the user can't save him
-                dino.kickOnY(MovablePoint.MIN_POSITIVE_Y_SPEED, elapsedTime);
-                canKickDino = false; 
+                dino.kickOnY(MovablePoint.MIN_POSITIVE_Y_SPEED * 3, elapsedTime);
+                canKickDino = false;
+                dinoInHole = true;
             }
         }
+
+        // Ground line moves left
+        ground.left(speed * delta);
     }
 
     public int getID() {

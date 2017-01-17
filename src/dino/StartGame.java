@@ -23,7 +23,7 @@ public class StartGame extends BasicGameState {
     @Override
     public void render(GameContainer gc, StateBasedGame game, Graphics g) throws SlickException {
         backGround.draw();
-    	Printer p = new Printer(g, Color.black, 160, 140);
+    	Printer p = new Printer(g, Color.black, 120, 140);
         p.println("Press Space to start.");
         p.println("Press Ctrl+C at any time to exit the game.");
         p.println("Press Up Arrow to kick Dino up so he doesn't fall in a hole.");
